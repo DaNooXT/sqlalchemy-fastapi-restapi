@@ -13,8 +13,10 @@ bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 from app.routes.auth_routes import auth_route
 from app.routes.order_routes import order_route
+from app.routes.Products_routes import products_route
 
 App.include_router(auth_route)
 App.include_router(order_route)
+App.include_router(products_route)
 
 #uvicorn main:app --reload

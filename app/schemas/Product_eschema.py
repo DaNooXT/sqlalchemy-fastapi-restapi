@@ -16,6 +16,16 @@ class ProductEschemaResponse (BaseModel):
     preco: float
     estoque: int
 
+    class config:
+        from_atributes = True
+
+
+class ProductEschemaUpdate (BaseModel):
+    nome: str
+    descricao: str
+    quantidade: int
+    preco: float
+    estoque: int
 
     class config:
         from_atributes = True
