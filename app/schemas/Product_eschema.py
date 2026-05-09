@@ -12,7 +12,6 @@ class ProductEschemaResponse (BaseModel):
     id: int
     nome: str
     descricao: str
-    quantidade: int
     preco: float
     estoque: int
 
@@ -23,7 +22,6 @@ class ProductEschemaResponse (BaseModel):
 class ProductEschemaUpdate (BaseModel):
     nome: str
     descricao: str
-    quantidade: int
     preco: float
     estoque: int
 

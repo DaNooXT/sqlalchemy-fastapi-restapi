@@ -37,10 +37,11 @@ class products (Base):
     estoque = Column("estoque", Integer)
     data_criacao = Column("data_criacao", DateTime(timezone=True), server_default=func.now(), nullable=False)
 
-    def __init__ (self, nome, descricao, preco):
+    def __init__ (self, nome, descricao, preco, estoque):
         self.nome = nome
         self.descricao = descricao
         self.preco = preco
+        self.estoque = self.estoque
 
 #cria a tabla de pedidos 
 class orders (Base):
