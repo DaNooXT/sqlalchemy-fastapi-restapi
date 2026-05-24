@@ -1,17 +1,45 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.exc import SQLAlchemyError
-from app.main import bcrypt_context
+from datetime import datetime, timedelta, timezone
+from jose import jwt
 
 from app.database.models import users
 
+from app.main import bcrypt_context, SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
+
 from app.schemas.Users_eschema import UserSchema
 from app.schemas.Users_eschema import UserResponseEschema
+
 from app.core.dependencies import create_session
 
 auth_route = APIRouter(prefix="/auth", tags=["auth"])
 
+
+def create_token(dados: dict, tempo_expiracao: int = ACCESS_TOKEN_EXPIRE_MINUTES):
+    dados_token = {
+        "sub": dados.nome,
+        "id": dados.id
+    }
+
+    expiracao = datetime.now(timezone.utc) + timedelta(minutes=tempo_expiracao)
+
+    if tempo_expiracao <= 0 or tempo_expiracao > 100:
+        raise ValueError("tempo invalido")
+
+    dados_token.update({"exp": expiracao})
+
+    token = jwt.encode(
+        dados_token,
+        SECRET_KEY,
+        algorithm=ALGORITHM
+    )
+
+    return token
+
+
 @auth_route.get("/")
 async def home():
+
     """ 
     Acessa a rota rome do site
     """
