@@ -19,3 +19,10 @@ class UserResponseEschema (BaseModel):
 
     class config:
         from_atributes = True
+
+class UserEschemaLogin (BaseModel):
+    email: str
+    senha: str
+
+    class Config:
+        from_atributer = True

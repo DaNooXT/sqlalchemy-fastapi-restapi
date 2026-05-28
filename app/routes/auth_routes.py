@@ -1,32 +1,30 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime, timedelta, timezone
-from jose import jwt
+from jose import jwt, JWTError
 
 from app.database.models import users
 
 from app.main import bcrypt_context, SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 
-from app.schemas.Users_eschema import UserSchema
-from app.schemas.Users_eschema import UserResponseEschema
+from app.schemas.Users_eschema import UserSchema, UserResponseEschema, UserEschemaLogin
 
 from app.core.dependencies import create_session
 
 auth_route = APIRouter(prefix="/auth", tags=["auth"])
 
 
-def create_token(dados: dict, tempo_expiracao: int = ACCESS_TOKEN_EXPIRE_MINUTES):
-    dados_token = {
-        "sub": dados.nome,
-        "id": dados.id
-    }
+def create_token(dados, tempo_expiracao = ACCESS_TOKEN_EXPIRE_MINUTES):
 
     expiracao = datetime.now(timezone.utc) + timedelta(minutes=tempo_expiracao)
 
     if tempo_expiracao <= 0 or tempo_expiracao > 100:
         raise ValueError("tempo invalido")
 
-    dados_token.update({"exp": expiracao})
+    dados_token = {
+        "sub": str(dados),
+        "exp": expiracao
+    }
 
     token = jwt.encode(
         dados_token,
@@ -87,4 +85,22 @@ async def list_user(session = Depends(create_session)):
     user_list = session.query(users).all()
 
     return user_list
+
+
+@auth_route.post("/login")
+async def login (dados: UserEschemaLogin, session = Depends(create_session)):
+
+    usuario = session.query(users).filter(users.email == dados.email).first()
+
+    if not usuario:
+        raise HTTPException(status_code=400, detail="Usuario nao encontardo")
     
+    if not bcrypt_context.verify(dados.senha, usuario.senha):
+        raise HTTPException(status_code=400, detail="Senha incorreta")
+
+    access_token = create_token(usuario.id)
+
+    return {
+        "access_token": access_token,
+        "token_type": "bearer"
+    }

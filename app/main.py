@@ -1,13 +1,17 @@
 from fastapi import FastAPI
 from passlib.context import CryptContext
-from dotenv import load_dotenv
 import os
+from dotenv import load_dotenv, find_dotenv
 
 load_dotenv()
 
-SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = os.grtenv("ALGORITHM")
-ACCESS_TOKEN_EXPIRE_MINUTES = os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")
+SECRET_KEY = os.getenv("SECRET_KEY").strip()
+ALGORITHM = os.getenv("ALGORITHM").strip()
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
+
+print(ALGORITHM)
+print(type(ALGORITHM))
+print(repr(ALGORITHM))
 
 App = FastAPI()
 
@@ -21,4 +25,4 @@ App.include_router(auth_route)
 App.include_router(order_route)
 App.include_router(products_route)
 
-#uvicorn main:app --reload
+#uvicorn app.main:App --reload
