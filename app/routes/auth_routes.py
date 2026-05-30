@@ -35,6 +35,18 @@ def create_token(dados, tempo_expiracao = timedelta(ACCESS_TOKEN_EXPIRE_MINUTES)
 
     return token
 
+def authenticate_user (dados, session = Depends(create_session)):
+    
+    usuario = session.query(users).filter(users.email == dados.email).first()
+
+    if not usuario:
+        raise HTTPException(status_code=400, detail="Usuario nao existe")
+    
+    elif not bcrypt_context.verify(dados.senha, usuario.senha):
+        raise HTTPException(status_code=400, detail="Senha incorreta")
+    
+    return usuario  
+
 
 @auth_route.get("/")
 async def home():
@@ -91,13 +103,7 @@ async def list_user(session = Depends(create_session)):
 @auth_route.post("/login")
 async def login (dados: UserEschemaLogin, session = Depends(create_session)):
 
-    usuario = session.query(users).filter(users.email == dados.email).first()
-
-    if not usuario:
-        raise HTTPException(status_code=400, detail="Usuario nao encontardo")
-    
-    if not bcrypt_context.verify(dados.senha, usuario.senha):
-        raise HTTPException(status_code=400, detail="Senha incorreta")
+    usuario = authenticate_user(dados)
 
     access_token = create_token(usuario.id)
     refresh_token = create_token(usuario.id, tempo_expiracao = timedelta(days=7))
