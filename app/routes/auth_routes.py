@@ -11,12 +11,13 @@ from app.schemas.Users_eschema import UserSchema, UserResponseEschema, UserEsche
 
 from app.core.dependencies import create_session
 
+
 auth_route = APIRouter(prefix="/auth", tags=["auth"])
 
 
-def create_token(dados, tempo_expiracao = ACCESS_TOKEN_EXPIRE_MINUTES):
+def create_token(dados, tempo_expiracao = timedelta(ACCESS_TOKEN_EXPIRE_MINUTES)):
 
-    expiracao = datetime.now(timezone.utc) + timedelta(minutes=tempo_expiracao)
+    expiracao = datetime.now(timezone.utc) + tempo_expiracao
 
     if tempo_expiracao <= 0 or tempo_expiracao > 100:
         raise ValueError("tempo invalido")
@@ -99,8 +100,10 @@ async def login (dados: UserEschemaLogin, session = Depends(create_session)):
         raise HTTPException(status_code=400, detail="Senha incorreta")
 
     access_token = create_token(usuario.id)
+    refresh_token = create_token(usuario.id, tempo_expiracao = timedelta(days=7))
 
     return {
         "access_token": access_token,
+        "refresh_token": refresh_token,
         "token_type": "bearer"
     }
