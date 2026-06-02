@@ -10,13 +10,13 @@ from app.main import bcrypt_context, SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_
 
 from app.schemas.Users_eschema import UserSchema, UserResponseEschema, UserEschemaLogin
 
-from app.core.dependencies import create_session
+from app.core.dependencies import create_session, verify_token
 
 
 auth_route = APIRouter(prefix="/auth", tags=["auth"])
 
 
-def create_token(dados, token_type: str, tempo_expiracao = timedelta(ACCESS_TOKEN_EXPIRE_MINUTES)):
+def create_token(dados, type, tempo_expiracao = timedelta(ACCESS_TOKEN_EXPIRE_MINUTES)):
 
     expiracao = datetime.now(timezone.utc) + tempo_expiracao
 
@@ -25,15 +25,11 @@ def create_token(dados, token_type: str, tempo_expiracao = timedelta(ACCESS_TOKE
 
     dados_token = {
         "sub": str(dados),
-        "token_type": token_type,
+        "type": type,
         "exp": expiracao
     }
 
-    token = jwt.encode(
-        dados_token,
-        SECRET_KEY,
-        algorithm=ALGORITHM
-    )
+    token = jwt.encode(dados_token, SECRET_KEY, algorithm=ALGORITHM)
     
     return token
 
@@ -49,15 +45,6 @@ def authenticate_user (dados, session: Session):
         raise HTTPException(status_code=400, detail="Email ou senha invalidos")
     
     return usuario  
-
-
-@auth_route.get("/")
-async def home():
-
-    """ 
-    Acessa a rota rome do site
-    """
-    return {"mensagem": "Rota acessada com sucesso"}
 
 
 @auth_route.post("/create_user")
@@ -108,12 +95,26 @@ async def list_user(session = Depends(create_session)):
 async def login (dados: UserEschemaLogin, session: Session = Depends(create_session)):
 
     usuario = authenticate_user(dados, session)
+
+    if not usuario:
+        raise HTTPException(status_code=400, detail="Usuario inexistente")
     
-    access_token = create_token(usuario.id, token_type = "access")
-    refresh_token = create_token(usuario.id, token_type = "refresh", tempo_expiracao = timedelta(days=7))
+    access_token = create_token(usuario.id, type = "access")
+    refresh_token = create_token(usuario.id, type = "refresh", tempo_expiracao = timedelta(days=7))
 
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
         "token_type": "bearer"
     }
+
+
+@auth_route.get("/refresh")
+async def use_refresh_token(usuario: users = Depends(verify_token)):
+
+    access_token = verify_token(usuario.id)
+
+    return {
+        "access_token": access_token,
+        "token_type": "Beare"
+    }   
