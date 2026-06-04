@@ -1,4 +1,4 @@
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, status
 from app.main import SECRET_KEY, ALGORITHM, oauth2_schema
 from sqlalchemy.orm import sessionmaker, Session
 from app.database.models import db
@@ -26,13 +26,10 @@ def verify_token (token: str = Depends(oauth2_schema), session: Session = Depend
         raise HTTPException(status_code=401, detail="Acesso nagado")
     
     except ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token expirado")
-    
-    if decoded_token.get("type") != "refresh":
-        raise HTTPException(status_code=401, detail="Token inválido")
+        raise HTTPException(status_code=401, detail="Acesso nagado")
     
     if not usuario_id: 
-        raise HTTPException(status_code=401, detail="Usuario inexistente")
+        raise HTTPException(status_code=401, detail="Acesso nagado")
     
     usuario = session.query(users).filter(users.id == int(usuario_id)).first()
 

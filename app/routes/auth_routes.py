@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends
+from fastapi.security import OAuth2PasswordRequestForm  
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta, timezone
@@ -8,7 +9,7 @@ from app.database.models import users
 
 from app.main import bcrypt_context, SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 
-from app.schemas.Users_eschema import UserSchema, UserResponseEschema, UserEschemaLogin
+from app.schemas.Users_eschema import UserSchemaCreate, UserResponseEschema, UserEschemaLogin
 
 from app.core.dependencies import create_session, verify_token
 
@@ -16,7 +17,7 @@ from app.core.dependencies import create_session, verify_token
 auth_route = APIRouter(prefix="/auth", tags=["auth"])
 
 
-def create_token(dados, type, tempo_expiracao = timedelta(ACCESS_TOKEN_EXPIRE_MINUTES)):
+def create_token(dados, tempo_expiracao = timedelta(ACCESS_TOKEN_EXPIRE_MINUTES)):
 
     expiracao = datetime.now(timezone.utc) + tempo_expiracao
 
@@ -25,7 +26,6 @@ def create_token(dados, type, tempo_expiracao = timedelta(ACCESS_TOKEN_EXPIRE_MI
 
     dados_token = {
         "sub": str(dados),
-        "type": type,
         "exp": expiracao
     }
 
@@ -34,21 +34,21 @@ def create_token(dados, type, tempo_expiracao = timedelta(ACCESS_TOKEN_EXPIRE_MI
     return token
 
 
-def authenticate_user (dados, session: Session):
+def authenticate_user (email, senha, session: Session):
     
-    usuario = session.query(users).filter(users.email == dados.email).first()
+    usuario = session.query(users).filter(users.email == email).first()
 
     if not usuario:
         raise HTTPException(status_code=400, detail="Email ou senha invalidos")
     
-    elif not bcrypt_context.verify(dados.senha, usuario.senha):
+    elif not bcrypt_context.verify(senha, usuario.senha):
         raise HTTPException(status_code=400, detail="Email ou senha invalidos")
     
     return usuario  
 
 
 @auth_route.post("/create_user")
-async def create_user(usuario: UserSchema, session: Session = Depends(create_session)):
+async def create_user(usuario: UserSchemaCreate, session: Session = Depends(create_session)):
 
     novo_existente = session.query(users).filter(users.email == usuario.email).first()
 
@@ -63,9 +63,8 @@ async def create_user(usuario: UserSchema, session: Session = Depends(create_ses
             session.add(novo_usuario)
             session.commit()
 
-        except SQLAlchemyError as e:
+        except SQLAlchemyError:
             session.rollback()
-            print(e)
             raise HTTPException(status_code=500, detail=("Erro ao criar usuario"))
         
         return {"mensagem": "Usuario cadrastrado com sucesso"}
@@ -94,27 +93,43 @@ async def list_user(session = Depends(create_session)):
 @auth_route.post("/login")
 async def login (dados: UserEschemaLogin, session: Session = Depends(create_session)):
 
-    usuario = authenticate_user(dados, session)
+    usuario = authenticate_user(dados.email, dados.senha, session)
 
     if not usuario:
         raise HTTPException(status_code=400, detail="Usuario inexistente")
     
-    access_token = create_token(usuario.id, type = "access")
-    refresh_token = create_token(usuario.id, type = "refresh", tempo_expiracao = timedelta(days=7))
+    access_token = create_token(usuario.id)
+    refresh_token = create_token(usuario.id, tempo_expiracao = timedelta(days=7))
 
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
-        "token_type": "bearer"
+        "type_token": "bearer"
+    }
+
+
+@auth_route.post("/login-form")
+async def login_form (dados_form: OAuth2PasswordRequestForm = Depends(), session: Session = Depends(create_session)):
+
+    usuario = authenticate_user(dados_form.username, dados_form.password, session)
+
+    if not usuario:
+        raise HTTPException(status_code=400, detail="Usuario inexistente")
+    
+    access_token = create_token(usuario.id)
+
+    return {
+        "access_token": access_token,
+        "type_token": "bearer"
     }
 
 
 @auth_route.get("/refresh")
 async def use_refresh_token(usuario: users = Depends(verify_token)):
 
-    access_token = verify_token(usuario.id)
+    access_token = create_token(usuario.id)
 
     return {
         "access_token": access_token,
-        "token_type": "Beare"
+        "token_type": "bearer"
     }   
