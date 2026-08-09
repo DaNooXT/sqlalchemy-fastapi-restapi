@@ -2,7 +2,7 @@
 
 API REST desenvolvida com FastAPI, SQLAlchemy e SQLite para gerenciamento de usuários, produtos e pedidos. A aplicação utiliza autenticação com JWT e dados de acesso protegidos em rotas específicas.
 
-## 📌 Visão geral
+## Visão geral
 
 Este projeto implementa um backend simples de loja/gestão de pedidos com os seguintes módulos principais:
 
@@ -13,7 +13,7 @@ Este projeto implementa um backend simples de loja/gestão de pedidos com os seg
 - persistência em SQLite com ORM SQLAlchemy;
 - migrações e versionamento do banco com Alembic.
 
-## 🧰 Stack tecnológica
+## Stack tecnológica
 
 - Python
 - FastAPI
@@ -25,7 +25,7 @@ Este projeto implementa um backend simples de loja/gestão de pedidos com os seg
 - python-jose
 - python-dotenv
 
-## 🗂️ Estrutura da aplicação
+## Estrutura da aplicação
 
 ```text
 app/
@@ -44,7 +44,7 @@ app/
     └── Users_eschema.py
 ```
 
-## ⚙️ Configuração
+## Configuração
 
 ### Dependências
 
@@ -68,7 +68,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES=30
 
 Essas variáveis são lidas em [app/main.py](app/main.py) e utilizadas em [app/routes/auth_routes.py](app/routes/auth_routes.py) para assinar e validar tokens JWT.
 
-## 🛢️ Banco de dados
+## Banco de dados
 
 A persistência é feita com SQLite e a conexão é definida em [app/database/models.py](app/database/models.py):
 
@@ -78,7 +78,7 @@ DATABASE_URL = f"sqlite:///{BASE_DIR}/banco.db"
 
 As migrações ficam na pasta [alembic](alembic) e a configuração principal do Alembic está em [alembic.ini](alembic.ini).
 
-## 🚀 Executando a API
+## Executando a API
 
 Para iniciar o servidor em desenvolvimento:
 
@@ -95,7 +95,7 @@ A documentação automática do FastAPI pode ser acessada em:
 - Swagger UI: http://127.0.0.1:8000/docs
 - Redoc: http://127.0.0.1:8000/redoc
 
-## 🔐 Endpoints
+## Endpoints
 
 ### Autenticação
 
@@ -124,7 +124,7 @@ A documentação automática do FastAPI pode ser acessada em:
 | GET | `/order/get_order/{order_id}` | Busca um pedido pelo identificador. |
 | GET | `/order/list_order` | Lista todos os pedidos. |
 
-## 🧾 Exemplo de payloads
+## Exemplo de payloads
 
 ### Usuário
 
@@ -170,7 +170,7 @@ A documentação automática do FastAPI pode ser acessada em:
 }
 ```
 
-## ✅ Observações
+## Observações
 
 - As rotas de produtos e pedidos são acessadas por meio do FastAPI com esquema Pydantic e resposta serializada em JSON.
 - A autenticação JWT exige o envio do token via header `Authorization: Bearer <token>` nos fluxos protegidos.
